@@ -9,9 +9,8 @@
 
 use winapi;
 use winreg;
-
-use self::winapi::windef::HWND;
-use self::winapi::winnt::LPCWSTR;
+use self::winapi::shared::windef::HWND;
+use self::winapi::shared::ntdef::LPCWSTR;
 use self::winreg::enums::HKEY_CURRENT_USER;
 use self::winreg::RegKey;
 use crate::app::App;
@@ -53,12 +52,12 @@ pub fn install(app: &App, schemes: &[String]) -> Result<(), Error> {
         let base_path = Path::new("Software").join("Classes").join(protocol);
         let key = hkcu.create_subkey(&base_path)?;
         // set our app name as the for reference
-        key.set_value("", &app.name)?;
-        key.set_value("URL Protocol", &"")?;
-
+        // key.("", &app.name)?;
+        // key.set_value("URL Protocol", &"")?;
+        key.0.set_value("URL Protocol", &app.name);
         let command_key =
             hkcu.create_subkey(&base_path.join("shell").join("open").join("command"))?;
-        command_key.set_value("", &format!("{} \"%1\"", app.exec))?
+        command_key.0.set_value("", &format!("{} \"%1\"", app.exec))?
     }
     Ok(())
 }
@@ -73,7 +72,7 @@ pub fn open<S: Into<String>>(uri: S) -> Result<(), Error> {
             to_wide_chars(&(uri.into().replace("\n", "%0A"))).as_ptr(),
             ptr::null(),
             ptr::null(),
-            winapi::SW_SHOWNORMAL,
+            1,
         )
     };
     if err < 32 {
